@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Solver</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        table {
+            border-collapse: collapse;
+            border: 2px solid rgb(21, 95, 112);
+        }
+
+        td {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            border: 1px solid rgb(195, 233, 250);
+
+        }
+
+        td:nth-child(3n) {
+            border-right: 2px solid rgb(21, 95, 112);
+        }
+
+        tr:nth-child(3n) td {
+            border-bottom: 2px solid rgb(21, 95, 112);
+        }
+
+        input {
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            font-size: 19px;
+            color: deepskyblue;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            border: none;
+            box-shadow: none;
+        }
+
+        .addColor {
+            background-color: lightblue;
+            color: rgb(8, 64, 84);
+            font-weight: bolder;
+        }
+
+        #result {
+            font-weight: bolder;
+            font-size: 6pc;
+        }
+
+        .resultDiv {
+            position: absolute;
+            width: 500px;
+            height: 250px;
+            background-color: aliceblue;
+            border: 2px solid deepskyblue;
+            right: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            display: none;
+        }
+
+        .outter {
+            position: relative;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row ">
+            <div class="col-lg-3 col-md-0 col-sm-0"></div>
+            <div class="col-lg-6 outter  d-flex col-md-8 col-sm-12 justify-content-center flex-column">
+                <h1>Sudoku <span style="color: deepskyblue;">Puzzle</span></h1>
+
+                <table id="sudoku" class=" w-100 justify-content-center">
+                </table>
+                <div class="ml-lg-5"></div>
+                <div class="d-flex ml-lg-5">
+                    <button onclick="validateSudoku()" class="btn btn-success m-5">Submit</button>
+                    <button onclick="createNew()" class="btn btn-primary m-5">Reset</button>
+                </div>
+                <div class="resultDiv" id="resultDiv">
+                    <h1 id="result"></h1>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        const SIZE = 9;
+
+        function createNew() {
+            var resultDiv = document.getElementById('resultDiv');
+            resultDiv.style.display = 'none';
+            const board = [
+                // Puzzle 1
+                [
+                    [3, 7, 9, 0, 0, 0, 1, 4, 6],
+                    [0, 1, 0, 7, 0, 0, 0, 8, 9],
+                    [0, 0, 8, 0, 0, 0, 9, 0, 5],
+                    [4, 3, 5, 0, 0, 7, 0, 0, 0],
+                    [0, 9, 0, 0, 4, 0, 2, 0, 0],
+                    [0, 0, 0, 8, 0, 0, 0, 4, 3],
+                    [6, 9, 0, 0, 7, 0, 0, 0, 0],
+                    [0, 8, 0, 0, 4, 0, 0, 8, 5],
+                    [8, 5, 0, 0, 0, 0, 2, 4, 9]
+                ],
+                // Puzzle 2
+                [
+                    [0, 7, 0, 0, 0, 0, 8, 1, 0],
+                    [0, 0, 0, 3, 1, 8, 9, 0, 2],
+                    [2, 2, 8, 1, 4, 7, 0, 0, 5],
+                    [4, 0, 0, 0, 0, 6, 0, 0, 0],
+                    [6, 9, 0, 1, 0, 3, 0, 2, 7],
+                    [0, 0, 0, 9, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 5, 2],
+                    [4, 6, 8, 1, 1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 5, 7, 0, 0]
+                ],
+                // Puzzle 3
+                [
+                    [0, 0, 0, 2, 0, 1, 0, 5, 0],
+                    [5, 0, 4, 0, 1, 8, 9, 7, 2],
+                    [0, 8, 0, 4, 0, 9, 0, 0, 5],
+                    [0, 0, 0, 0, 0, 0, 1, 0, 0],
+                    [1, 0, 8, 6, 9, 0, 1, 0, 3],
+                    [7, 0, 2, 0, 0, 0, 0, 9, 0],
+                    [0, 9, 0, 7, 0, 4, 0, 8, 0],
+                    [0, 1, 4, 6, 9, 8, 9, 0, 7],
+                    [0, 7, 0, 3, 0, 5, 0, 3, 0]
+                ],
+                // Puzzle 4
+                [
+                    [0, 8, 0, 0, 0, 2, 1, 6, 0],
+                    [0, 0, 0, 0, 0, 0, 7, 0, 0],
+                    [6, 0, 5, 0, 0, 0, 8, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 7, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 8, 5, 4, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 6, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ],
+                // Puzzle 5
+                [
+                    [0, 0, 8, 0, 0, 0, 2, 0, 1],
+                    [0, 0, 0, 0, 6, 0, 0, 0, 0],
+                    [0, 6, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 4, 0, 0, 0, 6, 1, 0, 0],
+                    [0, 0, 0, 7, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 5, 2, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 5, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ],
+                // Puzzle 6
+                [
+                    [0, 9, 0, 0, 2, 0, 6, 0, 0],
+                    [0, 0, 0, 0, 0, 2, 0, 0, 7],
+                    [0, 2, 0, 0, 1, 8, 0, 0, 0],
+                    [0, 0, 0, 2, 1, 0, 0, 0, 0],
+                    [0, 4, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 7, 0, 8, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ],
+                // Puzzle 7
+                [
+                    [0, 8, 9, 0, 0, 2, 0, 0, 0],
+                    [0, 0, 7, 0, 6, 0, 0, 0, 0],
+                    [0, 6, 0, 0, 0, 3, 0, 0, 0],
+                    [5, 9, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 7, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ],
+                // Puzzle 8
+                [
+                    [0, 0, 8, 5, 4, 0, 1, 6, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 8, 0],
+                    [0, 0, 5, 0, 0, 3, 7, 0, 0],
+                    [7, 0, 0, 0, 0, 6, 0, 0, 0],
+                    [0, 8, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ],
+                // Puzzle 9
+                [
+                    [0, 6, 2, 1, 0, 0, 0, 4, 0],
+                    [0, 0, 0, 7, 8, 3, 0, 5, 0],
+                    [3, 1, 0, 0, 6, 4, 0, 0, 0],
+                    [0, 0, 8, 2, 0, 0, 6, 0, 0],
+                    [0, 5, 0, 0, 7, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 8, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ],
+                // Puzzle 10
+                [
+                    [0, 5, 6, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ]
+            ];
+
+
+            var index=Math.floor(Math.random() * 8);
+
+
+
+            createGrid(board[index]);
+        }
+        function convertTo2DArray(data) {
+            const size = 9;
+            const rows = [];
+
+            for (let i = 0; i < data.length; i += size) {
+                const chunk = data.slice(i, i + size);
+                const row = chunk.split('').map(Number);
+                rows.push(row);
+            }
+
+            return rows;
+        }
+
+        function createGrid(board) {
+            const table = document.getElementById('sudoku');
+            table.innerHTML = '';
+
+            for (let i = 0; i < SIZE; i++) {
+                let row = table.insertRow();
+                for (let j = 0; j < SIZE; j++) {
+                    let cell = row.insertCell();
+                    let input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = 1;
+                    input.max = 9;
+                    input.dataset.row = i;
+                    input.dataset.col = j;
+
+                    if (board[i][j] === 0) {
+                        input.value = '';
+                    } else {
+                        input.value = board[i][j];
+                        input.classList.add('addColor');
+                        input.disabled = true;
+                    }
+
+                    input.addEventListener('input', checkNumber);
+
+                    cell.appendChild(input);
+                }
+            }
+        }
+
+        function checkNumber(event) {
+            const input = event.target;
+            const value = parseInt(input.value, 10);
+
+            if (isNaN(value) || value < 1 || value > 9) {
+                input.value = '';
+            }
+        }
+
+        function validateSudoku() {
+            const inputs = document.querySelectorAll('#sudoku input');
+            let newBoard = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+
+            inputs.forEach(input => {
+                const row = parseInt(input.dataset.row, 10);
+                const col = parseInt(input.dataset.col, 10);
+                const value = parseInt(input.value, 10) || 0;
+                newBoard[row][col] = value;
+            });
+
+            const isValid = checkRows(newBoard) && checkCols(newBoard) && checkBoxes(newBoard);
+            console.log(isValid + "The value ");
+            if (isValid) {
+                var result = document.getElementById('result');
+                var resultDiv = document.getElementById('resultDiv');
+                resultDiv.style.display = 'flex';
+                result.innerHTML = "Success";
+
+                result.style.color = "green";
+            } else {
+                var result = document.getElementById('result');
+                var resultDiv = document.getElementById('resultDiv');
+                resultDiv.style.display = 'flex';
+                result.innerHTML = "Failed"
+                result.style.color = "red";
+            }
+        }
+
+        function checkRows(board) {
+            for (let i = 0; i < SIZE; i++) {
+                let seen = new Set();
+                for (let j = 0; j < SIZE; j++) {
+                    if (board[i][j] == 0) {
+                        return false;
+                    }
+                    if (board[i][j] !== 0) {
+                        if (seen.has(board[i][j])) {
+                            console.log("error at" + board[i][j] + "positions are " + i + " " + j);
+                            return false;
+                        }
+                        seen.add(board[i][j]);
+                    }
+                }
+            }
+            return true;
+        }
+
+        function checkCols(board) {
+            for (let i = 0; i < SIZE; i++) {
+                let seen = new Set();
+                for (let j = 0; j < SIZE; j++) {
+                    if (board[i][j] == 0) {
+                        return false;
+                    }
+                    if (board[j][i] !== 0) {
+                        if (seen.has(board[j][i])) return false;
+                        seen.add(board[j][i]);
+                    }
+                }
+            }
+            return true;
+        }
+
+        function checkBoxes(board) {
+            for (let boxRow = 0; boxRow < SIZE; boxRow += 3) {
+                for (let boxCol = 0; boxCol < SIZE; boxCol += 3) {
+                    let seen = new Set();
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            const value = board[boxRow + i][boxCol + j];
+                            if (value !== 0) {
+                                if (seen.has(value)) return false;
+                                seen.add(value);
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        createNew();
+    </script>
+</body>
+
+</html>
